@@ -8,7 +8,6 @@
         }
     ],
     "require": {
-        //PHP7.1
         "krutush/template": "dev-master"
     },
     "autoload": {

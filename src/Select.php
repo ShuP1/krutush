@@ -24,6 +24,15 @@ class Select extends Element{
         return $this;
     }
 
+    public function other(Input $input, string $text, string $more = ''): Select{
+        $input->rename($this->name());
+        $this->data['other'] = $input;
+        $this->data['other.text'] = $text;
+        $this->data['other.more'] = $more;
+        return $this;
+    }
+
+
     public function valid(mixed $data)/*: bool|string*/{
         $parent = parent::valid($data);
         if($parent !== true || !isset($data))
@@ -33,16 +42,50 @@ class Select extends Element{
             if($option['value'] == $data)
                 return $parent;
         }
+        if(isset($this->data['other'])){
+            $input = $this->data['other'];
+            return $input->valid($data);
+        }
+
         return 'incorrect';
     }
 
-    public function html(string $more = '') : string{
-        $html = '<select name="'.$this->data['name'].'" '.
-        (isset($this->data['required']) && $this->data['required'] == true ? 'required ' : '').
-        $more.'><option disabled '.(isset($this->data['value']) ? 'selected ' : '').'value style="display:none"> --- </option>';
+    public function html(string $more = ''): string{
+        $selected = false;
+        $options = '<option disabled '.(isset($this->data['value']) ? '' : 'selected ').'value style="display:none"> --- </option>';
         foreach($this->data['options'] as $option){
-            $html .= '<option value="'.$option['value'].'" '.((isset($this->data['value']) && $this->data['value'] == $option['value']) ? 'selected="selected" ' : '' ).$option['more'].'>'.$option['text'].'</option>';
+            $options .= '<option value="'.$option['value'].'" ';
+            if(isset($this->data['value']) && $this->data['value'] == $option['value']){
+                $options .= 'selected="selected" ';
+                $selected = true;
+            }
+            $options .= $option['more'].'>'.$option['text'].'</option>';
         }
-        return $html.'</select>';
+
+        $html = '<select name="'.$this->data['name'].'" ';
+        $inputmore = '';
+        if(isset($this->data['other.text'])){
+            $options .= '<option value="'.$this->data['other.text'].'" '.(isset($this->data['value']) && $selected == false ? 'selected="selected" ' : '').'>'.$this->data['other.text'].'</option>';
+            //script in From->start()
+            $inputmore .= 'class="SelectOther" onchange="SelectOther(this,\''.$this->data['other.text'].'\')" ';
+            $html .= 'class="SelectOther" onchange="SelectOther(this,\''.$this->data['other.text'].'\')" ';
+            if(isset($this->data['value']) && $selected == false){
+                $html .= 'disabled style="display: none;" ';
+                $this->data['other']->value($this->data['value']);
+            }else{
+                $inputmore .= 'disabled style="display: none;" ';
+            }
+        }
+        if(isset($this->data['required']) && $this->data['required'] == true){
+            $html .= 'required ';
+            $inputmore .= 'required ';
+        }
+        $html .= $more.'>';
+        $html .= $options;
+        $html .= '</select>';
+        if(isset($this->data['other'])){
+            $html .= $this->data['other']->html($inputmore.$this->data['other.more']);
+        }
+        return $html;
     }
 }

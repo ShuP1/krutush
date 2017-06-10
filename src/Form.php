@@ -58,7 +58,29 @@ class Form {
             $this->method = $method;
             $this->url = $url;
         }
-        return '<form method="'.$method.'" '.(isset($url) ? 'action="'.$url.'" ' : '').' '.$more.'>';
+        $html = '<form method="'.$method.'" '.(isset($url) ? 'action="'.$url.'" ' : '').$more.'>';
+        $html .= "
+<script type=\"text/javascript\">
+function SelectOther(source, other){
+    if(source.tagName == 'SELECT' && source.value == other){
+        source.style.display = 'none';
+        source.disabled = true;
+        var input = document.getElementsByName(source.name)[1];
+        input.style.display = '';
+        input.disabled = false;
+        input.value = source.value;
+    }else if(source.tagName == 'INPUT' && source.value.length == 0){
+        source.style.display = 'none';
+        source.disabled = true;
+        var select = document.getElementsByName(source.name)[0];
+        select.style.display = '';
+        select.disabled = false;
+        select.value = '';
+    }
+}
+</script>
+";
+        return $html;
     }
 
     public function end(string $more = '') : string{
@@ -80,7 +102,10 @@ class Form {
         return '<input type="submit" '.(isset($name) ? 'value="'.$name.'" ' : '').$more.'>';
     }
 
-    function input(string $name) : Element{
+    function input(string $name, bool $add = true) : Element{
+        if($add == false)
+            return new Input($name);
+
         if($this->set == true){
             $input = $this->get($name);
             if(isset($input))
@@ -91,7 +116,9 @@ class Form {
         return $input;
     }
 
-    function select(string $name) : Element{
+    function select(string $name, bool $add = true) : Element{
+        if($add == false)
+            return new Select($name);
         if($this->set == true){
             $input = $this->get($name);
             if(isset($input))
@@ -113,7 +140,7 @@ class Form {
         return $input;
     }
 
-    public function add(Element $thing) : void{
+    public function add(Element $thing){
         if($this->set == false)
             $this->elements[] = $thing;
     }
