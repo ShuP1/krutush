@@ -9,14 +9,19 @@ class Element{
         $this->data['name'] = $name;
     }
 
+    public function rename(string $name): self{
+        $this->data['name'] = $name;
+        return $this;
+    } 
+
     public function name() : string{ return $this->data['name']; }
 
-    public function required(bool $value = true) : Element{
+    public function required(bool $value = true) : self{
         $this->data['required'] = $value;
         return $this;
     }
 
-    public function value(string $value) : Element{
+    public function value(string $value) : self{
         $this->data['value'] = $value;
         return $this;
     }
@@ -25,7 +30,7 @@ class Element{
         return $this->data['value'];
     }
 
-    public function error(bool $value = true) : Element{
+    public function error(bool $value = true) : self{
         $this->data['error'] = $value;
         return $this;
     }

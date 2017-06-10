@@ -21,6 +21,13 @@ class Input extends Element{
         return $this;
     }
 
+    public function checkbox(): Input{
+        $this->data['type'] = 'checkbox';
+        $this->data['checkbox'] = true;
+        $this->data['value'] = $this->data['name'];
+        return $this;
+    }
+
     public function minlength(int $value) : Input{
         $this->data['minlength'] = $value;
         return $this;
@@ -95,7 +102,6 @@ class Input extends Element{
         (isset($this->data['value']) ? 'value="'.$this->data['value'].'" ' : '').
         (isset($this->data['type']) ? 'type="'.$this->data['type'].'" ' : '').
         (isset($this->data['title']) ? 'title="'.$this->data['title'].'" ' : '').
-        (isset($this->data['pattern']) ? 'pattern="'.$this->data['pattern'].'" ' : '').
         (isset($this->data['pattern']) ? 'pattern="'.$this->data['pattern'].'" ' : '').
         (isset($this->data['minlength']) ? 'minlength="'.$this->data['minlength'].'" ' : '').
         (isset($this->data['maxlength']) ? 'maxlength="'.$this->data['maxlength'].'" ' : '').
