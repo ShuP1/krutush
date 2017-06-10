@@ -1,0 +1,19 @@
+{
+    "name": "krutush/exemple",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "sheychen",
+            "email": "contact@clementbois.fr"
+        }
+    ],
+    "require": {
+        //PHP7.1
+        "krutush/krutush": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Exemple\\": "src/"
+        }
+    }
+}
