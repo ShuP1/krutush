@@ -7,8 +7,8 @@
             "email": "contact@clementbois.fr"
         }
     ],
-    "require": {
-        "krutush/krutush": "dev-master"
+    "suggest": {
+        "krutush/krutush": "Hello"
     },
     "autoload": {
         "psr-4": {
