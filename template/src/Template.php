@@ -10,7 +10,7 @@ class Template{
     /** @var array */
     private $data = array();
     /** @var string */
-    private $extention = '.tpl';
+    const EXTENTION = '.tpl';
 
     public function __construct(string $path, string $extention = null, bool $folder = true){
         $this->path = $this->path($path, $extention, $folder);
@@ -77,7 +77,7 @@ class Template{
     }
 
     public function path(string $path, string $extention = null, bool $folder = true): string{
-        $path .= $extention ?? $this->extention;
+        $path .= $extention ?? self::EXTENTION;
         if($folder == true && class_exists(\Krutush\Path)) //Remove require krutush/krutush
             $path = \Krutush\Path::get('template').'/'.$path;
 

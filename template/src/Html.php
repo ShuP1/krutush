@@ -4,6 +4,9 @@ namespace Krutush\Template;
 
 class Html extends Text{
 
+    /** @var string */
+    const EXTENTION = '.phtml';
+
     public function _escape(string $data){
         return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
     }
