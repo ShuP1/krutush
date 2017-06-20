@@ -3,18 +3,20 @@
 namespace Krutush\Template;
 
 class Template{
+    /** @var string */
     private $path;
+    /** @var string */
     private $layout;
+    /** @var array */
     private $data = array();
-    private $content = array();
-    private $section;
-    private $sections = array();
+    /** @var string */
+    private $extention = '.tpl';
 
-    public function __construct($path, $extention = true, $folder = true){
+    public function __construct(string $path, string $extention = null, bool $folder = true){
         $this->path = $this->path($path, $extention, $folder);
     }
 
-    public function set($key, $value){
+    public function set(string $key, mixed $value): self{
         $this->data[$key] = $value;
         return $this;
     }
@@ -26,19 +28,18 @@ class Template{
         return $this;
     }
 
-    public function content($key, $value){
-        $this->content[$key] = $value;
+    public function extract(): array{
+        return [
+            'sets' => $this->data
+        ];
+    }
+
+    public function insert(array $data): self{
+        $this->sets($data['sets']);
         return $this;
     }
 
-    public function contents(array $array){
-        foreach($array as $key => $value){
-            $this->content($key, $value);
-        }
-        return $this;
-    }
-
-    public function run($output = 'direct'){
+    public function run(string $output = 'direct'){
         switch($output){
             case 'array':
             case 'direct':
@@ -57,10 +58,8 @@ class Template{
         };
         $callable($this, $this->path);
         if(isset($this->layout)){
-            $layout = new Template($this->layout, false, false);
-            $layout->sets($this->data)
-                ->contents($this->sections)
-                ->run();
+            $layout = new self($this->layout, '', false);
+            $layout->insert($this->extract())->run();
         }
         switch($output){
             case 'direct':
@@ -70,123 +69,98 @@ class Template{
                 return ob_get_clean();
 
             case 'array':
-                return array(
-                    'sets' => $this->data,
-                    'contents' => $this->sections
-                );
+                return $this->extract();
 
             default:
                 break;
         }
     }
 
-    public function _load($path, $extention = true, $folder = true){
-        $load = new Template($path, $extention, $folder);
-        $load->sets($this->data)
-            ->contents($this->sections)
-            ->run();
-        $this->sets($load->data)
-            ->contents($load->sections);
-        return $this;
-    }
-
-    public function _layout($path, $extention = true, $folder = true){
-        $this->layout = $this->path($path, $extention, $folder);
-        return $this;
-    }
-
-    public function path($path, $extention = true, $folder = true){
-        switch($extention){
-            case true:
-                $path .= '.phtml';
-                break;
-
-            case false:
-                break;
-
-            default:
-                $path .= $extention;
-                break;
-        }
-        if($folder == true)
-            $path = Path::get('template').'/'.$path;
+    public function path(string $path, string $extention = null, bool $folder = true): string{
+        $path .= $extention ?? $this->extention;
+        if($folder == true && class_exists(\Krutush\Path)) //Remove require krutush/krutush
+            $path = \Krutush\Path::get('template').'/'.$path;
 
         return $path;
     }
 
-    public function _content($key){
-        if(isset($this->content[$key]))
-            return $this->content[$key];
-
-        return '';
-    }
-
-    public function _section($key){
-        if(isset($this->section)){
-            trigger_error('Section precedente non cloturée : '.$this->section, E_USER_WARM);
-            return;
-        }
-        $this->section = $key;
-        ob_start();
-    }
-
-    public function _endsection($override = true){
-        if(!isset($this->section)){
-            trigger_error('Aucune section en cours', E_USER_WARM);
-            return;
-        }
-        $this->sections[$this->section] = ($override == false ? $this->sections[$this->section] : '').ob_get_clean();
-        $this->section = null;
+    public function _load(string $path, string $extention = null, bool $folder = true): self{
+        $load = new self($path, $extention, $folder);
+        $load->insert($this->extract())->run();
+        $this->insert($load->extract());
         return $this;
     }
 
-    public function _escape($data){
-        return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+    public function _layout(string $path, string $extention = null, bool $folder = true): self{
+        $this->layout = $this->path($path, $extention, $folder);
+        return $this;
     }
-    public function _e($data){ return $this->_escape($data); }
 
-    public function _exists($keys, $all = true, $exception = false){
-        if(is_array($keys)){
-            foreach($keys as $key){
-                if(isset($this->data[$key])){
-                    if(!$all)
-                        return true;
-                }else{
-                    if($all)
-                        return false;
-                }
-            }
-            return $all;
-        }else{
-            if(is_string($keys)){
-                return isset($this->data[$keys]);
+    
+    public function _exist(string $key): bool{
+        return isset($this->data[$key]);
+    }
+    public function _x(string $key): bool{ return $this->_exist($key); }
+
+    public function _exists(array $keys, bool $all = true){
+        foreach($keys as $key){
+            if($this->_exist($key)){
+                if(!$all)
+                    return true;
             }else{
-                if($exception)
-                    throw new \Exception('key must be a string');
-                return false;
+                if($all)
+                    return false;
             }
         }
+        return $all;
+    }
+    public function _xs(array $keys, bool $all = true){ return $this->_exists($keys, $all); }
+
+    public static function filter($data, string $key, string $value){
+        switch($key){
+            case 'type':
+                switch($filters['type']){
+                    case 'array':
+                        if(!is_array($data))
+                            return [$data];
+                        break;
+                    
+                    case 'string':
+                        if(!is_string($data))
+                            return strval($data);
+                        break;
+
+                    case 'int':
+                        if(!is_int($data))
+                            return intval($data);
+                }
+                break;
+        }
+        return $data;
     }
 
-    public function _x($keys, $all = true){ return $this->_exists($keys, $all); }
+    public function _get(string $key, array $filters = array()){
+        if(!$this->_exist($key)){
+            if(isset($filters['type'])){
+                switch($filters['type']){
+                    case 'array':
+                        return array();
+                    
+                    case 'string':
+                        return '';
 
-    public function _get($key, $escape = true){
-        if(!$this->_exists($key))
+                    case 'int':
+                        return 0;
+                }
+            }
             return null;
-        
-        $value = $this->data[$key];
-        if($escape && is_string($value))
-            $value = $this->_escape($value);
-
-        return $value;
+        }else{
+            $data = $this->data[$key];
+            foreach($filters as $name => $value){
+                $data = self::filter($data, $name, $value);
+            }
+            return $data;
+        }
     }
-    public function _($key, $escape = true){ return $this->_get($key, $escape); }
-
-    public function _print($key, $format, $escape = true){
-        if(!$this->_exists($key))
-            return '';
-
-        return str_replace('{?}', $this->_get($key, $escape), $format);
-    }
-    public function _p($key, $format, $escape = true){ return $this->_print($key, $format, $escape); }
+    public function _(string $key, array $filters = array()){ return $this->_get($key, $filters); }
 }
