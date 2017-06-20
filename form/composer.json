@@ -8,7 +8,7 @@
         }
     ],
     "require": {
-        "krutush/template": "dev-master"
+        "krutush/template": "^0.1"
     },
     "autoload": {
         "psr-4": {
