@@ -1,6 +1,6 @@
 <?php
 
-namespace MVC\Database\Request;
+namespace Krutush\Database\Request;
 
 //TODO: Split in traits
 //TODO: Add INTO

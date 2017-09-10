@@ -1,8 +1,8 @@
 <?php
 
-namespace MVC\Database\Request;
+namespace Krutush\Database\Request;
 
-use MVC\Database\Database;
+use Krutush\Database\Database;
 
 class Request{
     protected $db;

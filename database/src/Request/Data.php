@@ -1,6 +1,6 @@
 <?php
 
-namespace MVC\Database\Request;
+namespace Krutush\Database\Request;
 
 class Data extends Request{
     protected $values;

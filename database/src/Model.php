@@ -20,7 +20,7 @@ class Model extends Container{
 
     protected $modify = false;
 
-    public function __set($key, $value){
+    public function __set(string $key, $value){
         //TODO Check format
         $this->modify = true;
         parent::__set($key, $value);
