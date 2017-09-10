@@ -8,7 +8,7 @@
         }
     ],
     "require": {
-        "krutush/krutush": "dev-master",
+        "krutush/krutush": "^0.1",
         "sheychen/inutils": "^1.1"
     },
     "autoload": {
