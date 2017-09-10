@@ -31,7 +31,7 @@ class Router{
 	 * @param callable|string $callable Function to run or 'Controller#function'
 	 * @return Route
 	 */
-    public function add(string $path, $callable):Route{
+    public function add(string $path, $callable): Route{
 		$route = new Route($path, $callable);
 		$this->routes[] = $route;
 		return $route;
@@ -44,7 +44,7 @@ class Router{
 	 * @param array $filters
 	 * @return Route|null
 	 */
-	public function run(string $url, array $filters):?Route{
+	public function run(string $url, array $filters){
 		foreach($this->routes as $route){
 			if($route->match($url, $filters))
 				return $route;
@@ -58,7 +58,7 @@ class Router{
 	 * @param string $name
 	 * @return Route|null
 	 */
-	public function get(string $name):?Route{
+	public function get(string $name){
         foreach($this->routes as $route){
 			if($route->matchName($name))
 				return $route;

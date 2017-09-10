@@ -59,11 +59,11 @@ class App{
 		$this->router = new Router(isset($data['router']) ? $data['router'] : Path::get('config').'/Routes.php');
 	}
 	
-	public function run($uri = null, array $filters = array()){
+	public function run(string $uri = null, array $filters = array()){
 		$route = $this->router->run(($uri ?: $_SERVER['REQUEST_URI']), $filters);
 
 		if(!isset($route))
-			$this->error(new HttpException(404, 'Not Found'));
+			$this->error(new HttpException(404));
 
 		try{
 			$route->call($this, $this->config['namespace'], $this->config['controller']);
