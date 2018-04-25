@@ -119,7 +119,7 @@ class Template{
     public static function filter($data, string $key, string $value){
         switch($key){
             case 'type':
-                switch($filters['type']){
+                switch($value){
                     case 'array':
                         if(!is_array($data))
                             return [$data];
