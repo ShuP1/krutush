@@ -33,8 +33,8 @@ class Text extends Template{
         return $data;
     }
 
-    public function insert(array $data): self{
-        parent::setup();
+    public function insert(array $data): parent{
+        parent::insert($data);
         $this->contents($data['contents']);
         return $this;
     }

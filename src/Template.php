@@ -16,7 +16,7 @@ class Template{
         $this->path = $this->path($path, $extention, $folder);
     }
 
-    public function set(string $key, mixed $value): self{
+    public function set(string $key, $value): self{
         $this->data[$key] = $value;
         return $this;
     }
@@ -58,7 +58,7 @@ class Template{
         };
         $callable($this, $this->path);
         if(isset($this->layout)){
-            $layout = new self($this->layout, '', false);
+            $layout = new static($this->layout, '', false);
             $layout->insert($this->extract())->run();
         }
         switch($output){
@@ -77,15 +77,15 @@ class Template{
     }
 
     public function path(string $path, string $extention = null, bool $folder = true): string{
-        $path .= $extention ?? self::EXTENTION;
-        if($folder == true && class_exists(\Krutush\Path)) //Remove require krutush/krutush
+        $path .= $extention ?? static::EXTENTION;
+        if($folder == true && class_exists('\\Krutush\\Path')) //Remove require krutush/krutush
             $path = \Krutush\Path::get('template').'/'.$path;
 
         return $path;
     }
 
     public function _load(string $path, string $extention = null, bool $folder = true): self{
-        $load = new self($path, $extention, $folder);
+        $load = new static($path, $extention, $folder);
         $load->insert($this->extract())->run();
         $this->insert($load->extract());
         return $this;
@@ -157,7 +157,7 @@ class Template{
         }else{
             $data = $this->data[$key];
             foreach($filters as $name => $value){
-                $data = self::filter($data, $name, $value);
+                $data = static::filter($data, $name, $value);
             }
             return $data;
         }
