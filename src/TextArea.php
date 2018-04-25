@@ -3,7 +3,7 @@
 namespace Krutush\Form;
 
 class TextArea extends Element{
-    public function valid(mixed $data)/*: bool|string*/{
+    public function valid($data)/*: bool|string*/{
         return parent::valid($data);
     }
 

@@ -64,7 +64,7 @@ class Input extends Element{
         return $this;
     }
 
-    public function valid(mixde $data)/*: bool|string*/{
+    public function valid($data)/*: bool|string*/{
         $parent = parent::valid($data);
 
         if($parent !== true || !isset($data))

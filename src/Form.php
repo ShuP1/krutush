@@ -12,7 +12,7 @@ class Form {
     private $errors = array();
     private $set = false;
 
-    public function __construct(string $name, string $path, bool $extention = true, bool $folder = true){
+    public function __construct(string $name, string $path, string $extention = null, bool $folder = true){
         $this->name = $name;
         $tpl = new Html($path, $extention, $folder);
         $tpl->set($name, $this)
@@ -145,7 +145,7 @@ function SelectOther(source, other){
             $this->elements[] = $thing;
     }
 
-    public function get(string $name) : ?Element{
+    public function get(string $name) : Element{
         foreach($this->elements as $element){
             if($element->name() == $name)
                 return $element;

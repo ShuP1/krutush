@@ -21,12 +21,12 @@ class Element{
         return $this;
     }
 
-    public function value(string $value) : self{
+    public function value(string $value = null) : self{
         $this->data['value'] = $value;
         return $this;
     }
 
-    public function get() : ?string{
+    public function get(){
         return $this->data['value'];
     }
 
@@ -35,7 +35,7 @@ class Element{
         return $this;
     }
 
-    public function valid(mixed $data)/* :bool|string */{
+    public function valid($data)/* :bool|string */{
         if((!isset($data) || empty($data)) && isset($this->data['required']) && $this->data['required'] == true)
             return 'requis';
 

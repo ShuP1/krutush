@@ -33,7 +33,7 @@ class Select extends Element{
     }
 
 
-    public function valid(mixed $data)/*: bool|string*/{
+    public function valid($data)/*: bool|string*/{
         $parent = parent::valid($data);
         if($parent !== true || !isset($data))
             return $parent;
