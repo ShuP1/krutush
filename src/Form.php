@@ -37,7 +37,7 @@ class Form {
             $value = isset($data[$element->name()]) ? $data[$element->name()] : null;
             $return = $element->valid($value);
             if($return !== true){
-                $this->errors[] = 'Le champ '.$element->name().' est '.$return.'.';
+                $this->error('Le champ '.$element->name().' est '.$return.'.');
                 $valid = false;
             }else{
                 $element->value($value);
@@ -46,11 +46,15 @@ class Form {
         return $valid;
     }
 
+    public function error(string $error){
+        $this->errors[] = $error;
+    }
+
     public function name() : string{
         return $this->name;
     }
 
-    public function start(string $more = '', string $method = 'post', string $url = null) : string{
+    public function _start(string $more = '', string $method = 'post', string $url = null) : string{
         if(!in_array($method, array('post', 'get')))
             $method = 'post';
 
@@ -83,11 +87,11 @@ function SelectOther(source, other){
         return $html;
     }
 
-    public function end(string $more = '') : string{
+    public function _end(string $more = '') : string{
         return '</form '.$more.'>';
     }
 
-    public function errors(string $more = '') : string{
+    public function _errors(string $more = '') : string{
         if(empty($this->errors))
             return '';
 
@@ -98,11 +102,11 @@ function SelectOther(source, other){
         return $html.'</div>';
     }
 
-    public function submit(string $name = null, string $more = '') : string{
+    public function _submit(string $name = null, string $more = '') : string{
         return '<input type="submit" '.(isset($name) ? 'value="'.$name.'" ' : '').$more.'>';
     }
 
-    function input(string $name, bool $add = true) : Element{
+    function _input(string $name, bool $add = true) : Element{
         if($add == false)
             return new Input($name);
 
@@ -116,7 +120,7 @@ function SelectOther(source, other){
         return $input;
     }
 
-    function select(string $name, bool $add = true) : Element{
+    function _select(string $name, bool $add = true) : Element{
         if($add == false)
             return new Select($name);
         if($this->set == true){
@@ -129,7 +133,7 @@ function SelectOther(source, other){
         return $input;
     }
 
-    function textarea(string $name) : Element{
+    function _textarea(string $name) : Element{
         if($this->set == true){
             $input = $this->get($name);
             if(isset($input))
