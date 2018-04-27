@@ -28,6 +28,18 @@ class Input extends Element{
         return $this;
     }
 
+    public function password(bool $complexity = false): Input{
+        $this->data['type'] = 'password';
+        $this->data['password'] = true;
+        if($complexity){
+            $regex = '^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.[\W]).{8,}$';
+            $this->data['pattern'] = $regex;
+            $this->data['regex'] = $regex;
+            $this->data['title'] = 'Mot de passe trop simple';
+        }
+        return $this;
+    }
+
     public function minlength(int $value) : Input{
         $this->data['minlength'] = $value;
         return $this;
@@ -99,7 +111,7 @@ class Input extends Element{
 
     public function html(string $more = '') : string{
         return '<input name="'.$this->data['name'].'" '.
-        (isset($this->data['value']) ? 'value="'.$this->data['value'].'" ' : '').
+        (isset($this->data['value']) && !(isset($this->data['password']) && $this->data['password'] == true) ? 'value="'.$this->data['value'].'" ' : '').
         (isset($this->data['type']) ? 'type="'.$this->data['type'].'" ' : '').
         (isset($this->data['title']) ? 'title="'.$this->data['title'].'" ' : '').
         (isset($this->data['pattern']) ? 'pattern="'.$this->data['pattern'].'" ' : '').
