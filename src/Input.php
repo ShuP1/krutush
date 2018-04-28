@@ -140,6 +140,8 @@ class Input extends Element{
         (isset($this->data['type']) ? 'type="'.$this->data['type'].'" ' : '').
         (isset($this->data['title']) ? 'title="'.$this->data['title'].'" ' : '').
         (isset($this->data['pattern']) ? 'pattern="'.$this->data['pattern'].'" ' : '').
+        (isset($this->data['min']) ? 'min="'.$this->data['min'].'" ' : '').
+        (isset($this->data['max']) ? 'max="'.$this->data['max'].'" ' : '').
         (isset($this->data['minlength']) ? 'minlength="'.$this->data['minlength'].'" ' : '').
         (isset($this->data['maxlength']) ? 'maxlength="'.$this->data['maxlength'].'" ' : '').
         (isset($this->data['required']) && $this->data['required'] == true ? 'required ' : '').
