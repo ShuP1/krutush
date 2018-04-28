@@ -28,6 +28,22 @@ class Input extends Element{
         return $this;
     }
 
+    public function number(): Input{
+        $this->data['type'] = 'number';
+        $this->data['number'] = true;
+        return $this;
+    }
+
+    public function min(int $value) : Input{
+        $this->data['min'] = $value;
+        return $this;
+    }
+
+    public function max(int $value) : Input{
+        $this->data['max'] = $value;
+        return $this;
+    }
+
     public function password(bool $complexity = false): Input{
         $this->data['type'] = 'password';
         $this->data['password'] = true;
@@ -86,6 +102,15 @@ class Input extends Element{
             if(isset($this->data['phone'])){
                 if($this->data['phone'] == true && !preg_match("#^((\+\d{1,3}(-| )?\(?\d\)?(-| )?\d{1,5})|(\(?\d{2,6}\)?))(-| )?(\d{3,4})(-| )?(\d{4})(( x| ext)\d{1,5}){0,1}$#", $data))
                     return 'incorrect';
+            }else if(isset($this->data['number'])){
+                if($this->data['number'] == true && !ctype_digit($data))
+                    return 'non numérique';
+            }else if(isset($this->data['min'])){
+                if($data < $this->data['min'])
+                    return 'trop petit';
+            }else if(isset($this->data['max'])){
+                if($data > $this->data['max'])
+                    return 'trop grand';
             }else if(isset($this->data['email'])){
                 if($this->data['email'] == true && !filter_var($data, FILTER_VALIDATE_EMAIL))
                     return 'incorrect';
