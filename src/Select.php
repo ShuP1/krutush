@@ -62,7 +62,9 @@ class Select extends Element{
             $options .= $option['more'].'>'.$option['text'].'</option>';
         }
 
-        $html = '<select name="'.$this->data['name'].'" ';
+        $html = $this->htmlLabel().
+        '<select name="'.$this->data['name'].'" '.
+        'id="'.$this->getId().'" ';
         $inputmore = '';
         if(isset($this->data['other.text'])){
             $options .= '<option value="'.$this->data['other.text'].'" '.(isset($this->data['value']) && $selected == false ? 'selected="selected" ' : '').'>'.$this->data['other.text'].'</option>';

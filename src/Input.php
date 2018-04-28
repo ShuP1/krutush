@@ -135,7 +135,9 @@ class Input extends Element{
     }
 
     public function html(string $more = '') : string{
-        return '<input name="'.$this->data['name'].'" '.
+        return $this->htmlLabel().
+        '<input name="'.$this->data['name'].'" '.
+        'id="'.$this->getId().'" '.
         (isset($this->data['value']) && !(isset($this->data['password']) && $this->data['password'] == true) ? 'value="'.$this->data['value'].'" ' : '').
         (isset($this->data['type']) ? 'type="'.$this->data['type'].'" ' : '').
         (isset($this->data['title']) ? 'title="'.$this->data['title'].'" ' : '').

@@ -16,6 +16,17 @@ class Element{
 
     public function name() : string{ return $this->data['name']; }
 
+    public function id(string $id): self{
+        $this->data['id'] = $name;
+        return $this;
+    }
+
+    public function label(string $label, string $more = ''): self {
+        $this->data['label'] = $label;
+        $this->data['label.more'] = $more;
+        return $this;
+    }
+
     public function required(bool $value = true) : self{
         $this->data['required'] = $value;
         return $this;
@@ -42,7 +53,15 @@ class Element{
         return true;
     }
 
+    protected function getId(): string{
+        return isset($this->data['id']) ? $this->data['id'] : $this->data['name'];
+    }
+
+    protected function htmlLabel(): string{
+        return isset($this->data['label']) ? '<label for="'.$this->getId().'" '.$this->data['label.more'].'>'.$this->data['label']."</label>\n" : '';
+    }
+
     public function html(string $more = '') : string{
-        return '<span '.$more.'></span>';
+        return $this->htmlLabel().'<span '.$more.'></span>';
     }
 }
