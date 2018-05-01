@@ -40,6 +40,14 @@ class Database{
         return $select;
     }
 
+    public function insert(array $fields = null){
+        $insert = new Request\Insert($this);
+        if(isset($fields))
+            return $insert->fields($fields);
+
+        return $insert;
+    }
+
     public function create(string $table = null){
         $create = new Request\Create($this);
         if(isset($table))
@@ -47,5 +55,13 @@ class Database{
 
         return $create;
     }
-    //TODO insert, update, delete
+
+    public function drop(string $table = null){
+        $drop = new Request\Drop($this);
+        if(isset($table))
+            return $drop->table($table);
+
+        return $drop;
+    }
+    //TODO update, delete
 }

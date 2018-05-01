@@ -137,30 +137,40 @@ class Model{
         return $columns;
     }
 
+    public function getValues(){
+        $values = [];
+        foreach ($this->fields as $field => $data) {
+            $values[] = $data['value'];
+        }
+        return $values;
+    }
+
     protected static function convertField($data, $field){
         $options = static::getOptions($field);
-        if(is_null($data) && isset($options['not_null']) && $options['not_null'] == true)
-            throw new DatabaseException('Can\'t set null to NOT NULL field : '.$field);
-
-        if(isset($options['type'])){
-            switch(strtolower($options['type'])){
-                case 'int':
-                    $data = intval($data); //MAYBE: E_NOTICE on strange types
-                    break;
-                case 'char':
-                case 'varchar':
-                case 'text':
-                    $data = strval($data); //MAYBE: E_NOTICE on strange types
-                    if(isset($options['lenght']) && strlen($data) > $options['lenght'])
-                        throw new DatabaseException('data is to long in field : '.$field);
-                    break;
-                default:
-                    throw new DatabaseException('unknown type in field : '.$field);
-                    break;
+        if(is_null($data)){
+            if(isset($options['not_null']) && $options['not_null'] == true)
+                throw new DatabaseException('Can\'t set null to NOT NULL field : '.$field);
+        }else{
+            if(isset($options['type'])){
+                switch(strtolower($options['type'])){
+                    case 'int':
+                        $data = intval($data); //MAYBE: E_NOTICE on strange types
+                        break;
+                    case 'char':
+                    case 'varchar':
+                    case 'text':
+                        $data = strval($data); //MAYBE: E_NOTICE on strange types
+                        if(isset($options['lenght']) && strlen($data) > $options['lenght'])
+                            throw new DatabaseException('data is to long in field : '.$field);
+                        break;
+                    default:
+                        throw new DatabaseException('unknown type in field : '.$field);
+                        break;
+                }
             }
-        }
 
-        return $data;
+            return $data;
+        }
     }
 
 
@@ -182,6 +192,18 @@ class Model{
         return static::prepare($req);
     }
 
+    public static function insert(): Request\Insert{
+        $req = Connection::get(static::DATABASE)
+            ->insert(static::getColumns())
+            ->into(static::TABLE);
+
+        return $req;
+    }
+
+    public function runInsert(){
+        static::insert()->run($this->getValues());
+    }
+
     public static function create(): Request\Create{
         $req = Connection::get(static::DATABASE)
             ->create(static::TABLE);
@@ -193,10 +215,16 @@ class Model{
                 isset($options['lenght']) ? $options['lenght'] : null,
                 isset($options['not_null']) && $options['not_null'],
                 isset($options['primary']) && $options['primary'],
+                isset($options['unique']) && $options['unique'],
                 isset($options['custom']) ? $options['custom'] : null);
         }
 
         return $req;
+    }
+
+    public static function drop(){
+        return Connection::get(static::DATABASE)
+            ->drop(static::TABLE);
     }
 
     /* Do advanced customuzation here */
