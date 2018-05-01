@@ -139,6 +139,9 @@ class Model{
 
     protected static function convertField($data, $field){
         $options = static::getOptions($field);
+        if(is_null($data) && isset($options['not_null']) && $options['not_null'] == true)
+            throw new DatabaseException('Can\'t set null to NOT NULL field : '.$field);
+
         if(isset($options['type'])){
             switch(strtolower($options['type'])){
                 case 'int':
@@ -156,9 +159,6 @@ class Model{
                     break;
             }
         }
-
-        if(is_null($data) && isset($options['not_null']) && $options['not_null'] == true)
-            throw new DatabaseException('Can\'t set null to NOT NULL field : '.$field);
 
         return $data;
     }
