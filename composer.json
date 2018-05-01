@@ -8,8 +8,7 @@
         }
     ],
     "require": {
-        "krutush/krutush": "dev-develop",
-        "sheychen/inutils": "^1.1"
+        "krutush/krutush": "dev-develop"
     },
     "autoload": {
         "psr-4": {

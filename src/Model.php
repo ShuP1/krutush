@@ -2,192 +2,256 @@
 
 namespace Krutush\Database;
 
-use Inutils\Storage\Container;
+use Krutush\Database\DatabaseException;
 
-//TODO extends  
-//TODO protected to const php7
+//TODO extends
 //TODO add model links
 
-class Model extends Container{
-    protected static $DATABASE = null;
-    protected static $TABLE = null;
-    protected static $FIELDS = null;
-    protected static $ID = null;
-    protected static $REF = null;
-    protected static $FILTER = null;
-    protected static $INNER = null;
-    protected static $ORDER = null;
+class Model{
+    /** @var string */
+    public const DATABASE = null;
 
-    protected $modify = false;
+    /** @var string */
+    public const TABLE = null;
 
-    public function __set(string $key, $value){
-        //TODO Check format
-        $this->modify = true;
-        parent::__set($key, $value);
+    /** @var array 
+     * @example ['id' => ['column' => 'idColumn', 'type' => 'int', 'not_null' => true, 'primary' => true, 'custom' => 'AUTO_INCREMENT']] */
+    public const FIELDS = [];
+
+    /** @var array
+     * @example ['id' => ['value' => 1, 'modified' => false]] */
+    protected $fields = [];
+
+    public const FILTER = null;
+    public const INNER = null; //TODO: Manager OneToOne, OneToMany, ...
+    public const ORDER = null;
+
+
+    /*=== MAGIC ===*/
+    public function __construct(array $data = [], bool $useColumns = false){
+        foreach (static::getFields() as $field => $options) {
+            $column = $useColumns ? static::getColumn($field) : $field;
+            $value = static::convertField(isset($data[$column]) ? $data[$column] : null, $field);
+            $this->fields[$field] = [
+                'value' => $value,
+                'modified' => false
+            ];
+        }
     }
 
-    /*=== CREATE ===*/
+    //MAYBE: Save on destroy
 
-    public static function fromRow($row, $all = true, $exception = true){
+    public function __get(string $field){
+		if(array_key_exists($field, $this->fields))
+            return $this->fields[$field]['value'];
+
+		$trace = debug_backtrace();
+        trigger_error(
+            'Propriété non-définie via __get() : ' . $field .
+            ' dans ' . $trace[0]['file'] .
+            ' à la ligne ' . $trace[0]['line'],
+            E_USER_NOTICE);
+        return null;
+	}
+
+    public function __set(string $field, $value){
+        if(array_key_exists($field, static::FIELDS)){
+            $this->fields[$field] = [
+                'value' => static::convertField($value, $field),
+                'modified' => true
+            ];
+        }else{
+            $trace = debug_backtrace();
+            trigger_error(
+                'Propriété non-définie via __set() : ' . $field .
+                ' dans ' . $trace[0]['file'] .
+                ' à la ligne ' . $trace[0]['line'],
+                E_USER_NOTICE);
+        }
+	}
+
+
+    /*=== CREATE ===*/
+    public static function fromRow(\PDOStatement $row, bool $exception = true): ?self{
         if($row->rowCount() < 1){
             if($exception)
                 throw new \Exception('Create from Any Row');
-            return;
+            return null;
         }
 
-        if($all){
-            $res = array();
-            while($data = $row->fetch()){
-                $res[] = new static($data);
-            }
-            return $res;
-        }else{
-            $data = $row->fetch();
-            return new static($data);
-        }
+        $data = $row->fetch();
+        return new static($data, true);
     }
 
-    public static function fromData($data){
+    public static function fromRowAll(\PDOStatement $row, bool $exception = true): array{
+        if($row->rowCount() < 1){
+            if($exception)
+                throw new \Exception('Create from Any Row');
+            return [];
+        }
+
         $res = array();
-        foreach($data as $element){
-            $res[] = new static($element);
+        while($data = $row->fetch()){
+            $res[] = new static($data, true);
         }
         return $res;
     }
 
+    public static function fromData($data, bool $useColumns = false): array{
+        $res = array();
+        foreach($data as $element){
+            $res[] = new static($element, $useColumns);
+        }
+        return $res;
+    }
+
+
     /*=== CONST ===*/
-
-    public static function getFields($exception = false){
-        if(!isset(static::$FIELDS)){
-            if($exception)
-                throw new \Exception('FIELDS not set');
-            return;
-        }
-
-        return static::$FIELDS;
+    public static function getFields(bool $exception = false): array{
+        if(empty(static::$FIELDS) && $exception)
+            throw new DatabaseException('FIELDS not set');
+        
+        return static::FIELDS;
     }
 
-    public static function getField($alias){
+    public static function getOptions(string $field): array{
         $fields = static::getFields();
-        if(!isset($fields[$alias]))
-            throw new \Exception('Can\'t find alias : '.$alias);
+        if(!isset($fields[$field]))
+            throw new DatabaseException('Can\'t find field : '.$field);
 
-        return $fields[$alias];
+        return $fields[$field];
     }
 
-    public static function getID($real = true){
-        if(static::$ID == null){
-            if($real)
-                return static::getField('ID');
+    public static function getColumn(string $field): string{
+        $options = static::getOptions($field);
+        return isset($options['column']) ? $options['column'] : $field;
+    }
 
-            throw new \Exception('ID not set');
+    public static function getColumns(bool $sql = true): array{
+        $fields = static::getFields();
+        $columns = [];
+        foreach ($fields as $field => $options) {
+            $column = static::getColumn($field);
+            $columns[] = $sql ? '`'.static::TABLE.'`.`'.$column.'`' : $column;
+        }
+        return $columns;
+    }
+
+    protected static function convertField($data, $field){
+        $options = static::getOptions($field);
+        if(isset($options['type'])){
+            switch(strtolower($options['type'])){
+                case 'int':
+                    $data = intval($data); //MAYBE: E_NOTICE on strange types
+                    break;
+                case 'char':
+                case 'varchar':
+                case 'text':
+                    $data = strval($data); //MAYBE: E_NOTICE on strange types
+                    if(isset($options['lenght']) && strlen($data) > $options['lenght'])
+                        throw new DatabaseException('data is to long in field : '.$field);
+                    break;
+                default:
+                    throw new DatabaseException('unknown type in field : '.$field);
+                    break;
+            }
         }
 
-        return $real == true ? static::getField(static::$ID) : static::$ID;
+        if(is_null($data) && isset($options['not_null']) && $options['not_null'] == true)
+            throw new DatabaseException('Can\'t set null to NOT NULL field : '.$field);
+
+        return $data;
     }
 
-    public static function getREF($real = true){
-        if(static::$REF == null){
-            if($real)
-                return static::getField('REF');
-
-            throw new \Exception('REF not set');
-        }
-
-        return $real == true ? static::getField(static::$REF) : static::$REF;
-    }
-
-    public static function getDATABASE(){
-        return isset(static::$DATABASE) ? static::$DATABASE : null;
-    }
 
     /*=== QUERIES ===*/
+    public static function select(): Request\Select{
+        $req = Connection::get(static::DATABASE)
+            ->select(static::getColumns())
+            ->from(static::TABLE);
 
-    public static function prepare(){
-        $req = Connection::get(static::getDATABASE())
-            ->select(static::getFields())
-            ->from(static::$TABLE);
+        if(static::INNER != null)
+            $req = $req->join(static::INNER);
 
-        if(isset(static::$INNER))
-            $req = $req->join(static::$INNER);
+        if(static::FILTER != null)
+            $req = $req->where(static::FILTER);
 
-        if(isset(static::$FILTER))
-            $req = $req->where(static::$FILTER);
+        if(static::ORDER != null)
+            $req = $req->orderby(static::ORDER);
 
-        if(isset(static::$ORDER))
-            $req = $req->orderby(static::$ORDER);
-
-        return static::postPrepare($req);
+        return static::prepare($req);
     }
 
-    public static function postPrepare($req){ return $req; }
+    public static function create(): Request\Create{
+        $req = Connection::get(static::DATABASE)
+            ->create(static::TABLE);
 
-    public static function row(array $values = null, $filters = null){
-        $req = static::prepare();
+        foreach (static::getFields() as $field => $options) {
+            $req->column(
+                static::getColumn($field),
+                $options['type'],
+                isset($options['lenght']) ? $options['lenght'] : null,
+                isset($options['not_null']) && $options['not_null'],
+                isset($options['primary']) && $options['primary'],
+                isset($options['custom']) ? $options['custom'] : null);
+        }
 
-        if(isset($filters))
-            $req = $req->where($filters, true);
+        return $req;
+    }
+
+    /* Do advanced customuzation here */
+    protected static function prepare($req){ return $req; }
+
+    public static function runSelect(array $values = null, string $where = null){
+        $req = static::select();
+
+        if(isset($where))
+            $req = $req->where($where, true);
 
         return $req->run($values);
     }
 
+    public static function first(array $values = null, string $where = null): ?self{
+        return static::fromRow(static::runSelect($values, $where), false);
+    }
+
+    public static function firstOrFail(array $values = null, string $where = null): ?self{
+        return static::fromRow(static::runSelect($values, $where));
+    }
+
+    public static function all(array $values = null, string $where = null): array{
+        return static::fromRowAll(static::runSelect($values, $where), false);
+    }
+
+    public static function allOrFail(array $values = null, string $where = null): array{
+        return static::fromRowAll(static::runSelect($values, $where));
+    }
+
+    public static function exists(array $values = null, string $where = null): bool{
+        return static::first($values, $where) !== null;
+    }
+
+    public static function count(array $values = null, string $where = null): int{
+        $req = static::select();
+        $req->fields(['COUNT(*) as count']);
+
+        if(isset($where))
+            $req = $req->where($where, true);
+
+        $data = $req->run($values)->fetch();
+        if(!isset($data['count']))
+            return 0;
+
+        return $data['count'];
+    }
+
+
+    /* TODO: Manager ids
     public static function find($id) {
          return static::first(array($id), (static::getID().' = ?'));
     }
 
     public static function findOrFail($id) {
          return static::firstOrFail(array($id), (static::getID().' = ?'));
-    }
-
-    public static function first(array $values = null, $filters = null) {
-        return static::fromRow(static::row($values, $filters), false, false);
-    }
-
-    public static function firstOrFail(array $values = null, $filters = null) {
-        return static::fromRow(static::row($values, $filters), false);
-    }
-
-    public static function all(array $values = null, $filters = null) {
-        return static::fromRow(static::row($values, $filters), true, false);
-    }
-
-    public static function allOrFail(array $values = null, $filters = null) {
-        return static::fromRow(static::row($values, $filters));
-    }
-
-    public static function byRef($ref){
-        return static::first(array($ref), (static::getREF().' = ?'));
-    }
-
-    public static function byRefOrFail($ref){
-        return static::firstOrFail(array($ref), (static::getREF().' = ?'));
-    }
-
-    public static function resolveID($ref, $exception = false) {
-        $res = static::fromRow(static::row(array($ref), (static::getREF().' = ?')), false, $exception);
-        if(!isset($res))
-            return;
-
-        $id = static::getID(false);
-        return $res->$id;
-    }
-
-    public static function exists(array $values = null, $filters = null){
-        return static::first($values, $filters) !== null;
-    }
-
-    //TODO clean
-    public static function count(array $values = null, $filters = null){
-        $req = static::prepare();
-        $req = $req->fields(array('COUNT(*)'));
-
-        if(isset($filters))
-            $req = $req->where($filters, true);
-
-        $data = $req->run($values)->fetch();
-        if(!isset($data['COUNT(*)']))
-            return;
-
-        return $data['COUNT(*)'];
-    }
+    }*/
 }

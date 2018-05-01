@@ -39,5 +39,13 @@ class Database{
 
         return $select;
     }
+
+    public function create(string $table = null){
+        $create = new Request\Create($this);
+        if(isset($table))
+            return $create->table($table);
+
+        return $create;
+    }
     //TODO insert, update, delete
 }
