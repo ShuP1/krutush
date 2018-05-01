@@ -48,7 +48,7 @@ class Input extends Element{
         $this->data['type'] = 'password';
         $this->data['password'] = true;
         if($complexity){
-            $regex = '^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.[\W]).{8,}$';
+            $regex = '^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}$';
             $this->data['pattern'] = $regex;
             $this->data['regex'] = $regex;
             $this->data['title'] = 'Mot de passe trop simple';
