@@ -48,6 +48,14 @@ class Database{
         return $insert;
     }
 
+    public function update(array $fields = null){
+        $update = new Request\Update($this);
+        if(isset($fields))
+            return $update->fields($fields);
+
+        return $update;
+    }
+
     public function create(string $table = null){
         $create = new Request\Create($this);
         if(isset($table))
@@ -62,6 +70,10 @@ class Database{
             return $drop->table($table);
 
         return $drop;
+    }
+
+    public function getLastInsertId(){
+        return $this->pdo->lastInsertId();
     }
     //TODO update, delete
 }

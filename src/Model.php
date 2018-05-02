@@ -31,7 +31,7 @@ class Model{
     public function __construct(array $data = [], bool $useColumns = false){
         foreach (static::getFields() as $field => $options) {
             $column = $useColumns ? static::getColumn($field) : $field;
-            $value = static::convertField(isset($data[$column]) ? $data[$column] : null, $field);
+            $value = static::convertField(isset($data[$column]) ? $data[$column] : (isset($options['default']) ? $options['default'] : null), $field);
             $this->fields[$field] = [
                 'value' => $value,
                 'modified' => false
@@ -137,10 +137,51 @@ class Model{
         return $columns;
     }
 
+    public static function getPrimaryColumns(bool $sql = true): array{
+        $fields = static::getFields();
+        $columns = [];
+        foreach ($fields as $field => $options) {
+            if(isset($options['primary']) && $options['primary']){
+                $column = static::getColumn($field);
+                $columns[] = $sql ? '`'.static::TABLE.'`.`'.$column.'`' : $column;
+            }
+        }
+        return $columns;
+    }
+
+    public function getModifiedColumns(bool $sql = true): array{
+        $fields = static::getFields();
+        $columns = [];
+        foreach ($fields as $field => $options) {
+            if($this->fields[$field]['modified']){
+                $column = static::getColumn($field);
+                $columns[] = $sql ? '`'.static::TABLE.'`.`'.$column.'`' : $column;
+            }
+        }
+        return $columns;
+    }
+
     public function getValues(){
         $values = [];
         foreach ($this->fields as $field => $data) {
             $values[] = $data['value'];
+        }
+        return $values;
+    }
+
+    public function getModifiedValues(){
+        $values = [];
+        foreach ($this->fields as $field => $data) {
+            if($data['modified']) $values[] = $data['value'];
+        }
+        return $values;
+    }
+
+    public function getPrimaryValues(){
+        $values = [];
+        foreach ($this->fields as $field => $data) {
+            $options = static::getOptions($field);
+            if(isset($options['primary']) && $options['primary']) $values[] = $data['value'];
         }
         return $values;
     }
@@ -162,6 +203,9 @@ class Model{
                         $data = strval($data); //MAYBE: E_NOTICE on strange types
                         if(isset($options['lenght']) && strlen($data) > $options['lenght'])
                             throw new DatabaseException('data is to long in field : '.$field);
+                        break;
+                    case 'bit':
+                        $data = boolval($data); //MAYBE: E_NOTICE on strange types
                         break;
                     default:
                         throw new DatabaseException('unknown type in field : '.$field);
@@ -201,7 +245,15 @@ class Model{
     }
 
     public function runInsert(){
-        static::insert()->run($this->getValues());
+        return static::insert()->run($this->getValues());
+    }
+
+    public function runUpdate(){
+        $req = Connection::get(static::DATABASE)
+            ->update(static::getModifiedColumns())
+            ->table(static::TABLE)
+            ->where(implode(' AND ', array_map(function($field){ return $field.' = ?'; }, static::getPrimaryColumns())))
+            ->run(array_merge($this->getModifiedValues(), $this->getPrimaryValues()));
     }
 
     public static function create(): Request\Create{

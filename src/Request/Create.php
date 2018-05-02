@@ -48,8 +48,6 @@ class Create extends Request{
                 $uniques
             )
         )."\n)";
-
-        //TODO: foreign keys
     }
 
     public function run(array $values = null){
