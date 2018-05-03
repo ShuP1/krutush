@@ -34,6 +34,18 @@ class Input extends Element{
         return $this;
     }
 
+    public function date(): Input{
+        $this->data['type'] = 'date';
+        $this->data['date'] = true;
+        return $this;
+    }
+
+    public function time(): Input{
+        $this->data['type'] = 'time';
+        $this->data['time'] = true;
+        return $this;
+    }
+
     public function min(int $value) : Input{
         $this->data['min'] = $value;
         return $this;
@@ -105,6 +117,18 @@ class Input extends Element{
             }else if(isset($this->data['number'])){
                 if($this->data['number'] == true && !ctype_digit($data))
                     return 'non numérique';
+            }else if(isset($this->data['date'])){
+                if($this->data['date'] == true){
+                    $d = DateTime::createFromFormat('Y-m-d', $data);
+                    if(!$d || $d->format('Y-m-d') != $data)
+                        return 'incorrect';
+                }
+            }else if(isset($this->data['time'])){
+                if($this->data['time'] == true){
+                    $t = DateTime::createFromFormat('H:i', $data);
+                    if(!$t || $t->format('H:i') != $data)
+                        return 'incorrect';
+                }
             }else if(isset($this->data['min'])){
                 if($data < $this->data['min'])
                     return 'trop petit';
