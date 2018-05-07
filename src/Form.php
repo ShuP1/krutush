@@ -12,10 +12,11 @@ class Form {
     private $errors = array();
     private $set = false;
 
-    public function __construct(string $name, string $path, string $extention = null, bool $folder = true){
+    public function __construct(string $name, string $path, string $extention = null, bool $folder = true, array $sets = array()){
         $this->name = $name;
         $tpl = new Html($path, $extention, $folder);
         $tpl->set($name, $this)
+            ->sets($sets)
             ->run('buffer');
         return $this;
     }

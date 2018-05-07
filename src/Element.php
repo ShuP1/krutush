@@ -17,7 +17,7 @@ class Element{
     public function name() : string{ return $this->data['name']; }
 
     public function id(string $id): self{
-        $this->data['id'] = $name;
+        $this->data['id'] = $id;
         return $this;
     }
 

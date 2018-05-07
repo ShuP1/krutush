@@ -11,8 +11,7 @@ class TextArea extends Element{
         return $this->htmlLabel().
         '<textarea name="'.$this->data['name'].'" '.
         'id="'.$this->getId().'" '.
-        (isset($this->data['value']) ? 'value="'.$this->data['value'].'" ' : '').
         (isset($this->data['required']) && $this->data['required'] == true ? 'required ' : '').
-        $more.'></textarea>';
+        $more.'>'.(isset($this->data['value']) ? $this->data['value'] : '').'</textarea>';
     }
 }

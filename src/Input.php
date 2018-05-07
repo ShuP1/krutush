@@ -46,12 +46,12 @@ class Input extends Element{
         return $this;
     }
 
-    public function min(int $value) : Input{
+    public function min(string $value) : Input{
         $this->data['min'] = $value;
         return $this;
     }
 
-    public function max(int $value) : Input{
+    public function max(string $value) : Input{
         $this->data['max'] = $value;
         return $this;
     }
@@ -119,13 +119,13 @@ class Input extends Element{
                     return 'non numérique';
             }else if(isset($this->data['date'])){
                 if($this->data['date'] == true){
-                    $d = DateTime::createFromFormat('Y-m-d', $data);
+                    $d = \DateTime::createFromFormat('Y-m-d', $data);
                     if(!$d || $d->format('Y-m-d') != $data)
                         return 'incorrect';
                 }
             }else if(isset($this->data['time'])){
                 if($this->data['time'] == true){
-                    $t = DateTime::createFromFormat('H:i', $data);
+                    $t = \DateTime::createFromFormat('H:i', $data);
                     if(!$t || $t->format('H:i') != $data)
                         return 'incorrect';
                 }
