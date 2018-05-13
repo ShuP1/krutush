@@ -4,7 +4,7 @@ namespace Krutush\Database\Request;
 
 use Krutush\Database\Database;
 
-class Request{
+class Request{ //TODO: escape and slugify
     protected $db;
 
     public function __construct(Database $db){

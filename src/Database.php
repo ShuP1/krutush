@@ -4,6 +4,8 @@ namespace Krutush\Database;
 
 class Database{
     private $pdo;
+    private $debug = false;
+    private $requests = [];
 
     public function __construct(array $settings){
         $dns = $settings['driver'] .
@@ -12,6 +14,7 @@ class Database{
         ';dbname=' . $settings['schema'] .
         ((isset($settings['charset'])) ? (';charset=' . $settings['charset']) : '');
 
+        $this->debug = isset($settings['debug']) ? $settings['debug'] : false;
         $this->pdo = new \PDO($dns, $settings['username'], $settings['password'], $settings['options']);
     }
 
@@ -20,6 +23,9 @@ class Database{
     }
 
     public function prepare(string $request){
+        if($this->debug)
+            $this->requests[] = $request;
+
         return $this->pdo->prepare($request);
     }
 
@@ -72,8 +78,12 @@ class Database{
         return $drop;
     }
 
-    public function getLastInsertId(){
+    public function getLastInsertId(): int{
         return $this->pdo->lastInsertId();
+    }
+
+    public function getRequests(): array{
+        return $this->requests;
     }
     //TODO update, delete
 }

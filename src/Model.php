@@ -14,9 +14,15 @@ class Model{
     /** @var string */
     public const TABLE = null;
 
-    /** @var array 
-     * @example ['id' => ['column' => 'idColumn', 'type' => 'int', 'not_null' => true, 'primary' => true, 'custom' => 'AUTO_INCREMENT']] */
+    /** @var array */ 
     public const FIELDS = [];
+    /*[
+        'id' => ['column' => 'idColumn', 'type' => 'int', 'not_null' => true, 'primary' => true, 'custom' => 'AUTO_INCREMENT'],
+        'owner' => ['type' => 'int', 'foreign' => ['model' => UserModel::class, 'field' => 'id', 'on_delete' => 'cascade', 'on_update' => 'set null']]
+    ]*/
+
+    /** @var string */
+    public const ID = 'id';
 
     /** @var array
      * @example ['id' => ['value' => 1, 'modified' => false]] */
@@ -127,6 +133,10 @@ class Model{
         return isset($options['column']) ? $options['column'] : $field;
     }
 
+    public static function getID(): string{
+        return static::getColumn(static::ID);
+    }
+
     public static function getColumns(bool $sql = true): array{
         $fields = static::getFields();
         $columns = [];
@@ -172,9 +182,17 @@ class Model{
     public function getModifiedValues(){
         $values = [];
         foreach ($this->fields as $field => $data) {
-            if($data['modified']) $values[] = $data['value'];
+            if($data['modified'])
+                $values[] = $data['value'];
+
         }
         return $values;
+    }
+
+    public function unmodify(){
+        foreach($this->fields as $field => $data){
+            $this->fields[$field]['modified'] = false;
+        }
     }
 
     public function getPrimaryValues(){
@@ -206,6 +224,15 @@ class Model{
                         break;
                     case 'bit':
                         $data = boolval($data); //MAYBE: E_NOTICE on strange types
+                        break;
+                    case 'date':
+                        $data = (is_a($data, \DateTime::class) ? $data : new \DateTime(strval($data)))->format('Y-m-d');
+                        break;
+                    case 'time':
+                        $data = (is_a($data, \DateTime::class) ? $data : new \DateTime(strval($data)))->format('H:i:s');
+                        break;
+                    case 'datetime':
+                        $data = (is_a($data, \DateTime::class) ? $data : new \DateTime(strval($data)))->format('Y-m-d H:i:s');
                         break;
                     default:
                         throw new DatabaseException('unknown type in field : '.$field);
@@ -244,8 +271,13 @@ class Model{
         return $req;
     }
 
-    public function runInsert(){
-        return static::insert()->run($this->getValues());
+    public function runInsert(bool $forceID = true){
+        $insert = static::insert();
+        $res = $insert->run($this->getValues());
+        if($forceID)
+            $this->{static::ID} = Connection::get(static::DATABASE)->getLastInsertID();
+
+        return $res;
     }
 
     public function runUpdate(){
@@ -253,7 +285,9 @@ class Model{
             ->update(static::getModifiedColumns())
             ->table(static::TABLE)
             ->where(implode(' AND ', array_map(function($field){ return $field.' = ?'; }, static::getPrimaryColumns())))
-            ->run(array_merge($this->getModifiedValues(), $this->getPrimaryValues()));
+            ->run(array_merge($this->getModifiedValues(true), $this->getPrimaryValues()));
+        $this->unmodify();
+        return $this;
     }
 
     public static function create(): Request\Create{
@@ -261,14 +295,42 @@ class Model{
             ->create(static::TABLE);
 
         foreach (static::getFields() as $field => $options) {
+            $column = static::getColumn($field);
             $req->column(
-                static::getColumn($field),
+                $column,
                 $options['type'],
                 isset($options['lenght']) ? $options['lenght'] : null,
                 isset($options['not_null']) && $options['not_null'],
-                isset($options['primary']) && $options['primary'],
-                isset($options['unique']) && $options['unique'],
                 isset($options['custom']) ? $options['custom'] : null);
+            
+            if(isset($options['primary']) && $options['primary'])
+                $req->primary($column);
+
+            if(isset($options['unique']) && $options['unique'])
+                $req->unique($column);
+
+            if(isset($options['foreign'])){
+                $foreign = $options['foreign'];
+
+                $model = null;
+
+                if(is_array($foreign)){
+                    if(!isset($foreign['model']))
+                        throw new DatabaseException('Any model for foreign in field '.$field);
+
+                    $model = $foreign['model'];
+                }else{
+                    $model = $foreign;
+                }
+                if(!class_exists($model))
+                    throw new DatabaseException('Can\'t find class '.$model.' for foreign in field '.$field);
+
+                $req->foreign($column, $model::TABLE,
+                    $model::getColumn(isset($foreign['field']) ? $foreign['field'] : $model::ID),
+                    isset($foreign['index']) ? $foreign['index'] : true,
+                    isset($foreign['on_delete']) ? $foreign['on_delete'] : null,
+                    isset($foreign['on_update']) ? $foreign['on_update'] : null);
+            }
         }
 
         return $req;
@@ -325,13 +387,11 @@ class Model{
         return $data['count'];
     }
 
-
-    /* TODO: Manager ids
-    public static function find($id) {
+    public static function find($id): ?self{
          return static::first(array($id), (static::getID().' = ?'));
     }
 
-    public static function findOrFail($id) {
+    public static function findOrFail($id): self{
          return static::firstOrFail(array($id), (static::getID().' = ?'));
-    }*/
+    }
 }
