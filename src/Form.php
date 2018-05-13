@@ -11,9 +11,19 @@ class Form {
     private $name;
     private $errors = array();
     private $set = false;
+    private $csrfToken;
+    public static $csrfSession = '_form_token';
+    public static $csrfInput = "_token";
 
     public function __construct(string $name, string $path, string $extention = null, bool $folder = true, array $sets = array()){
         $this->name = $name;
+        if(session_status() == PHP_SESSION_NONE) session_start(); //TODO: create Krutsh\Session
+        if(isset($_SESSION[static::$csrfSession][$name])){
+            $this->csrfToken = $_SESSION[static::$csrfSession][$name];
+        }else{
+            $this->csrfToken = base64_encode(random_bytes(6));
+            $_SESSION[static::$csrfSession][$name] = $this->csrfToken;
+        }
         $tpl = new Html($path, $extention, $folder);
         $tpl->set($name, $this)
             ->sets($sets)
@@ -33,6 +43,10 @@ class Form {
     public function valid(array $data) : bool{
         $data = static::sanitize($data);
         $this->set = true;
+        if(!isset($_SESSION[static::$csrfSession][$this->name]) || !isset($data[static::$csrfInput]) || $_SESSION[static::$csrfSession][$this->name] != $data[static::$csrfInput]){
+            $this->error('Formulaire expiré');
+            return false;
+        }
         $valid = true;
         foreach($this->elements as $element){
             $value = isset($data[$element->name()]) ? $data[$element->name()] : null;
@@ -44,6 +58,9 @@ class Form {
                 $element->value($value);
             }
         }
+        if($valid)
+            unset($_SESSION[static::$csrfSession][$this->name]);
+            
         return $valid;
     }
 
@@ -64,6 +81,7 @@ class Form {
             $this->url = $url;
         }
         $html = '<form method="'.$method.'" '.(isset($url) ? 'action="'.$url.'" ' : '').$more.'>';
+        $html .= '<input type="hidden" name="'.static::$csrfInput.'" value="'.$this->csrfToken.'">';
         $html .= "
 <script type=\"text/javascript\">
 function SelectOther(source, other){
