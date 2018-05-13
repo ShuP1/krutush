@@ -81,7 +81,7 @@ class Input extends Element{
     public function alpha(string $value = '') : Input{
         $this->data['type'] = 'text';
         $this->data['title'] = 'Alphabétique';
-        $this->data['alpha'] = $value;
+        $this->data['alpha'] = $value; //TODO: add parttern
         return $this;
     }
 
@@ -111,49 +111,46 @@ class Input extends Element{
             return $parent;
 
         if(!empty($data)){
-            if(isset($this->data['phone'])){
-                if($this->data['phone'] == true && !preg_match("#^((\+\d{1,3}(-| )?\(?\d\)?(-| )?\d{1,5})|(\(?\d{2,6}\)?))(-| )?(\d{3,4})(-| )?(\d{4})(( x| ext)\d{1,5}){0,1}$#", $data))
-                    return 'incorrect';
-            }else if(isset($this->data['number'])){
-                if($this->data['number'] == true && !ctype_digit($data))
-                    return 'non numérique';
-            }else if(isset($this->data['date'])){
-                if($this->data['date'] == true){
-                    $d = \DateTime::createFromFormat('Y-m-d', $data);
-                    if(!$d || $d->format('Y-m-d') != $data)
-                        return 'incorrect';
-                }
-            }else if(isset($this->data['time'])){
-                if($this->data['time'] == true){
-                    $t = \DateTime::createFromFormat('H:i', $data);
-                    if(!$t || $t->format('H:i') != $data)
-                        return 'incorrect';
-                }
-            }else if(isset($this->data['min'])){
-                if($data < $this->data['min'])
-                    return 'trop petit';
-            }else if(isset($this->data['max'])){
-                if($data > $this->data['max'])
-                    return 'trop grand';
-            }else if(isset($this->data['email'])){
-                if($this->data['email'] == true && !filter_var($data, FILTER_VALIDATE_EMAIL))
-                    return 'incorrect';
-            }else if(isset($this->data['minlength'])){
-                if(strlen($data) < $this->data['minlength'])
-                    return 'trop court';
-            }else if(isset($this->data['maxlength'])){
-                if(strlen($data) > $this->data['maxlength'])
-                    return 'trop long';
-            }else if(isset($this->data['alpha'])){
-                if(!preg_match('#^[\p{L}'.$this->data['alpha'].']*$#', $data))
-                    return 'non alphabétique';
-            }else if(isset($this->data['alphanum'])){
-                if(!preg_match('#^[\p{L}\p{N}'.$this->data['alphanum'].']*$#', $data))
-                    return 'non alphanumérique';
-            }else if(isset($this->data['regex'])){
-                if(!preg_match('#'.$this->data['regex'].'#', $data))
+            if(isset($this->data['phone']) && $this->data['phone'] == true && !preg_match("#^((\+\d{1,3}(-| )?\(?\d\)?(-| )?\d{1,5})|(\(?\d{2,6}\)?))(-| )?(\d{3,4})(-| )?(\d{4})(( x| ext)\d{1,5}){0,1}$#", $data))
+                return 'incorrect';
+            
+            if(isset($this->data['number']) && $this->data['number'] == true && !ctype_digit($data))
+                return 'non numérique';
+
+            if(isset($this->data['date']) && $this->data['date'] == true){
+                $d = \DateTime::createFromFormat('Y-m-d', $data);
+                if(!$d || $d->format('Y-m-d') != $data)
                     return 'incorrect';
             }
+            if(isset($this->data['time']) && $this->data['time'] == true){
+                $t = \DateTime::createFromFormat('H:i', $data);
+                if(!$t || $t->format('H:i') != $data)
+                    return 'incorrect';
+            }
+            if(isset($this->data['min']) && $data < $this->data['min'])
+                return 'trop petit';
+            
+            if(isset($this->data['max']) && $data > $this->data['max'])
+                return 'trop grand';
+            
+            if(isset($this->data['email']) && $this->data['email'] == true && !filter_var($data, FILTER_VALIDATE_EMAIL))
+                return 'incorrect';
+            
+            if(isset($this->data['minlength']) && strlen($data) < $this->data['minlength'])
+                return 'trop court';
+            
+            if(isset($this->data['maxlength']) && strlen($data) > $this->data['maxlength'])
+                return 'trop long';
+            
+            if(isset($this->data['alpha']) && !preg_match('#^[\p{L}'.$this->data['alpha'].']*$#', $data))
+                return 'non alphabétique';
+            
+            if(isset($this->data['alphanum']) && !preg_match('#^[\p{L}\p{N}'.$this->data['alphanum'].']*$#', $data))
+                return 'non alphanumérique';
+            
+            if(isset($this->data['regex']) && !preg_match('#'.$this->data['regex'].'#', $data))
+                return 'incorrect';
+            
         }
         return $parent;
     }
