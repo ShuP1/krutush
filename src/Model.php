@@ -355,20 +355,23 @@ class Model{
      * Convert field to column
      *
      * @param string $field
+     * @param boolean $sql add table name and quote
      * @return string
      */
-    public static function getColumn(string $field): string{
+    public static function getColumn(string $field, bool $sql = false): string{
         $options = static::getOptions($field);
-        return isset($options['column']) ? $options['column'] : $field;
+        $column = isset($options['column']) ? $options['column'] : $field;
+        return $sql ? '`'.static::TABLE.'`.`'.$column.'`' : $column;
     }
 
     /**
      * Get table ID (for find and findOrFail)
      *
+     * @param boolean $sql add table name and quote
      * @return string
      */
-    public static function getID(): string{
-        return static::getColumn(static::ID);
+    public static function getID(bool $sql = false): string{
+        return static::getColumn(static::ID, $sql);
     }
 
     /**
@@ -381,8 +384,7 @@ class Model{
         $fields = static::getFields();
         $columns = [];
         foreach ($fields as $field => $options) {
-            $column = static::getColumn($field);
-            $columns[] = $sql ? '`'.static::TABLE.'`.`'.$column.'`' : $column;
+            $columns[] = static::getColumn($field, $sql);
         }
         return $columns;
     }
@@ -799,7 +801,7 @@ class Model{
             foreach ($models as $current) {
                 $ids[] = $current->{isset($foreign['for']) ? $foreign['for'] : $field};
             }
-            $ids = array_unique($ids);
+            $ids = array_values(array_unique($ids));
             $foreigns = [];
             foreach($model::all($ids, $model::getColumn(isset($foreign['field']) ? $foreign['field'] : $model::ID).' IN ( '.str_repeat('?, ', count($ids)-1).'? )') as $current){
                 $cid = $current->{isset($foreign['field']) ? $foreign['field'] : $model::ID};
@@ -814,7 +816,7 @@ class Model{
                 if(isset($foreigns[$id]))
                     $current->set($field, $foreigns[$id]);
                 else if(!isset($foreign['nullable']) || !$foreign['nullable'])
-                    throw new DatabaseException('Null foreign model');
+                    var_dump($ids);//throw new DatabaseException('Null foreign model');
                 else
                     $current->set($field, null);
             }
