@@ -620,6 +620,8 @@ class Model{
             if(isset($options['unique']) && $options['unique'])
                 $req->unique($column);
 
+            $index = false;
+
             if(isset($options['foreign'])){
                 $foreign = $options['foreign'];
 
@@ -638,10 +640,14 @@ class Model{
 
                 $req->foreign($column, $model::TABLE,
                     $model::getColumn(isset($foreign['field']) ? $foreign['field'] : $model::ID),
-                    isset($foreign['index']) ? $foreign['index'] : true,
                     isset($foreign['on_delete']) ? $foreign['on_delete'] : null,
                     isset($foreign['on_update']) ? $foreign['on_update'] : null);
+
+                $index = true;
             }
+
+            if(isset($options['index']) ? $options['index'] : $index)
+                $req->index($column);
         }
 
         return $req;
@@ -765,7 +771,7 @@ class Model{
      * @return self|null
      */
     public static function find($id): ?self{
-         return static::first(array($id), (static::getID().' = ?'));
+         return static::first(array($id), static::getID().' = ?');
     }
 
     /**
@@ -775,7 +781,27 @@ class Model{
      * @return self
      */
     public static function findOrFail($id): self{
-         return static::firstOrFail(array($id), (static::getID().' = ?'));
+         return static::firstOrFail(array($id), static::getID().' = ?');
+    }
+
+    /**
+     * Use static:ID to get rows
+     *
+     * @param array $ids array(int) is a good idea
+     * @return array|null
+     */
+    public static function finds(array $ids): ?array{
+         return static::all($ids, static::getID().' IN ( '.str_repeat('?, ', count($ids)-1).'? )');
+    }
+
+    /**
+     * Same as find but throw exception on null
+     *
+     * @param array $ids array(int) is a good idea
+     * @return array
+     */
+    public static function findsOrFail(array $ids): array{
+         return static::allOrFail($ids, static::getID().' IN ( '.str_repeat('?, ', count($ids)-1).'? )');
     }
 
     /**

@@ -48,10 +48,7 @@ class Create extends Request{
         return $this;
     }
 
-    public function foreign(string $name, string $table, string $column, bool $index = true, string $on_delete = null, string $on_update = null): Create{ //TODO: complex foreign
-        if($index)
-            $this->index($name);
-
+    public function foreign(string $name, string $table, string $column, string $on_delete = null, string $on_update = null): Create{ //TODO: complex foreign
         $this->foreign[$name] = compact('name', 'table', 'column', 'on_delete', 'on_update');
         return $this;
     }
