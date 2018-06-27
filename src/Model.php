@@ -176,7 +176,7 @@ class Model{
                         throw new DatabaseException('Can\'t find class '.$model.' for foreign in field '.$field);
 
                     $id = $this->{isset($foreign['for']) ? $foreign['for'] : $field};
-                    $where = $model::getColumn(isset($foreign['field']) ? $foreign['field'] : $model::ID).' = ?';
+                    $where = '`'.$model::getColumn(isset($foreign['field']) ? $foreign['field'] : $model::ID).'` = ?';
 
                     $value = (isset($foreign['multiple']) && $foreign['multiple']) ? 
                         $model::all([$id], $where):
@@ -594,6 +594,17 @@ class Model{
             ->run(array_merge($this->getModifiedValues(true), $this->getPrimaryValues()));
         $this->unmodify();
         return $this;
+    }
+
+    /**
+     * Delete instance in database
+     */
+    public function runDelete(){
+        $req = Connection::get(static::DATABASE)
+            ->delete()
+            ->from(static::TABLE)
+            ->where(implode(' AND ', array_map(function($field){ return $field.' = ?'; }, static::getPrimaryColumns())))
+            ->run($this->getPrimaryValues());
     }
 
     /**

@@ -78,6 +78,10 @@ class Database{
         return $drop;
     }
 
+    public function delete(){
+        return new Request\Delete($this);
+    }
+
     public function getLastInsertId(): int{
         return $this->pdo->lastInsertId();
     }
