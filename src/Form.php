@@ -17,18 +17,22 @@ class Form {
 
     public function __construct(string $name, string $path, string $extention = null, bool $folder = true, array $sets = array()){
         $this->name = $name;
-        if(session_status() == PHP_SESSION_NONE) session_start(); //TODO: create Krutsh\Session
-        if(isset($_SESSION[static::$csrfSession][$name])){
-            $this->csrfToken = $_SESSION[static::$csrfSession][$name];
-        }else{
-            $this->csrfToken = base64_encode(random_bytes(6));
-            $_SESSION[static::$csrfSession][$name] = $this->csrfToken;
-        }
+        $this->resetCsrf();
         $tpl = new Html($path, $extention, $folder);
         $tpl->set($name, $this)
             ->sets($sets)
             ->run('buffer');
         return $this;
+    }
+
+    public function resetCsrf(){
+        if(session_status() == PHP_SESSION_NONE) session_start(); //TODO: create Krutsh\Session
+        if(isset($_SESSION[static::$csrfSession][$this->name])){
+            $this->csrfToken = $_SESSION[static::$csrfSession][$this->name];
+        }else{
+            $this->csrfToken = base64_encode(random_bytes(6));
+            $_SESSION[static::$csrfSession][$this->name] = $this->csrfToken;
+        }
     }
 
     public static function sanitize(array $data) : array{
@@ -52,7 +56,7 @@ class Form {
             $value = isset($data[$element->name()]) ? $data[$element->name()] : null;
             $return = $element->valid($value);
             if($return !== true){
-                $this->error('Le champ '.$element->name().' est '.$return.'.');
+                $this->error('Le champ '.$element->name().' est '.$return.'.', false);
                 $valid = false;
             }else{
                 $element->value($value);
@@ -60,12 +64,14 @@ class Form {
         }
         if($valid)
             unset($_SESSION[static::$csrfSession][$this->name]);
-            
+
         return $valid;
     }
 
-    public function error(string $error){
+    public function error(string $error, bool $reset = true){
         $this->errors[] = $error;
+        if($reset)
+            $this->resetCsrf();
     }
 
     public function name() : string{
