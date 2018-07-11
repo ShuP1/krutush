@@ -20,11 +20,11 @@ class Insert extends Data{
 
     public function sql(){
         if(!isset($this->table))
-            throw new DatabaseException('Any table set');
+            throw new \UnexpectedValueException('Any table set');
 
-        return 'INSERT INTO `'.$this->table."`\n".
+        return 'INSERT INTO '.$this->table."\n".
         '('.implode(', ', $this->fields).")\n".
-        'VALUES ('. str_repeat('?, ', count($this->fields)-1).(count($this->fields) > 0 ? '?' : '').')';
+        'VALUES ('.static::paramList(count($this->fields)).')';
     }
 
     public function run(array $values = null){

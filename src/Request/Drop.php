@@ -15,7 +15,7 @@ class Drop extends Request{
 
     public function sql(){
         if(!isset($this->table))
-            throw new DatabaseException('Any table set');
+            throw new \UnexpectedValueException('Any table set');
 
         return 'DROP TABLE `'.$this->table.'`';
     }

@@ -18,33 +18,23 @@ class Create extends Request{
         return $this;
     }
 
-    public function column(string $name, string $type, int $lenght = null, bool $not_null = false, string $more = null): Create{ //Really ?
-        $this->columns[] = '`'.$name.'` '.$type.($lenght ? '('.$lenght.')' : '').($not_null ? ' NOT NULL' : '').(isset($more) ? ' '.$more : '');
+    public function column(string $name, string $type, int $lenght = null, bool $not_null = false, string $more = null): Create{
+        $this->columns[] = compact('name', 'type', 'lenght', 'not_null', 'more');
         return $this;
     }
 
     public function primary(string $name): Create{
-        $this->primary[] = '`'.$name.'`';
+        $this->primary[] = $name;
         return $this;
     }
 
-    public function unique(string $name): Create{
-        $this->unique[$name] = ['`'.$name.'`'];
+    public function unique(string $name, array $columns = null): Create{
+        $this->unique[$name] = $columns ?? [$name];
         return $this;
     }
 
-    public function uniques(string $name, array $columns): Create{
-        $this->unique[$name] = [$columns];
-        return $this;
-    }
-
-    public function index(string $name): Create{
-        $this->index[$name] = ['`'.$name.'`'];
-        return $this;
-    }
-
-    public function indexs(string $name, array $columns): Create{
-        $this->index[$name] = [$columns];
+    public function index(string $name, array $columns = null): Create{
+        $this->index[$name] = $columns ?? [$name];
         return $this;
     }
 
@@ -55,10 +45,15 @@ class Create extends Request{
 
     public function sql(){
         if(!isset($this->table))
-            throw new DatabaseException('Any table set');
+            throw new \UnexpectedValueException('Any table set');
 
         if(empty($this->columns))
-            throw new DatabaseException('Any columns set');
+            throw new \UnexpectedValueException('Any columns set');
+
+        $columns = [];
+        foreach($this->columns as $column){
+            $columns[] = $column['name'].' '.$column['type'].($column['lenght'] ? '('.$column['lenght'].')' : '').($column['not_null'] ? ' NOT NULL' : '').(isset($column['more']) ? ' '.$column['more'] : '');
+        }
 
         $uniques = [];
         foreach ($this->unique as $name => $columns) {
@@ -77,10 +72,10 @@ class Create extends Request{
             (isset($options['on_update']) ? 'ON UPDATE '.$options['on_update'] : '');
         }
 
-        return 'CREATE TABLE `'.$this->table.'`('."\n".
-        $sql = implode(",\n",
+        return 'CREATE TABLE '.$this->table.'('."\n".
+        implode(",\n",
             array_merge(
-                $this->columns,
+                $columns,
                 (empty($this->primary) ? [] : [
                     'CONSTRAINT `PK_'.ucfirst(strtolower(strtok($this->table, ' '))).'` PRIMARY KEY ('.implode(', ', $this->primary).')'
                 ]),

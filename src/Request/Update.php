@@ -4,9 +4,15 @@ namespace Krutush\Database\Request;
 
 use Krutush\Database\DatabaseException;
 
+/** UPDATE */
 class Update extends Data{
+    /** @var array */
     protected $fields;
+
+    /** @var string */
     protected $table;
+
+    /** @var array */
     protected $where;
 
     public function fields(array $fields = null, bool $add = false): Update{
@@ -19,18 +25,24 @@ class Update extends Data{
         return $this;
     }
 
-    public function where(string $where, bool $add = false): Update{
-        $this->where = $add && $this->where ? '('.$this->where.') AND ('.$where.')' : $where;
+    /**
+     * @param string|array $where
+     * @param boolean $add
+     * @return Update
+     */
+    public function where($where, bool $add = false): Update{
+        $where = is_array($where) ? $where : [$where];
+        $this->where = $add && $this->where ? array_merge($this->where, $where) : $where;
         return $this;
     }
 
     public function sql(){
         if(!isset($this->table))
-            throw new DatabaseException('Any table set');
+            throw new \UnexpectedValueException('Any table set');
 
-        return 'UPDATE `'.$this->table."`\n".
-        'SET '.implode(', ', array_map(function($field){ return $field.' = ?'; }, $this->fields))."\n".
-        (isset($this->where) ? ('WHERE '.$this->where) : '');
+        return 'UPDATE '.$this->table."\n".
+        'SET '.static::toParams($this->fields)."\n".
+        ($this->where ? 'WHERE '.static::combineParams($this->where) : '');
     }
 
     public function run(array $values = null){

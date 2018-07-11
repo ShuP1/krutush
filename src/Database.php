@@ -2,10 +2,22 @@
 
 namespace Krutush\Database;
 
+/**
+ * Extention around PDO
+ */
 class Database{
+    /** @var \PDO */
     private $pdo;
-    private $debug = false;
+
+    /**
+     * Requests history if debug == true
+     *
+     * @var array
+     */
     private $requests = [];
+
+    /** @var bool */
+    private $debug = false;
 
     public function __construct(array $settings){
         $dns = $settings['driver'] .
@@ -23,22 +35,29 @@ class Database{
     }
 
     public function prepare(string $request){
-        if($this->debug)
-            $this->requests[] = $request;
-
         return $this->pdo->prepare($request);
     }
 
     public function execute(string $request, array $values = null, $row = false){
+        if($this->debug)
+            $time_start = microtime(true);
+
         $req = $this->prepare($request);
         $req->execute($values);
-        if($row == false)
+        if(!$row)
             return $req->fetchAll();
 
+        if($this->debug)
+            $this->requests[] = [
+                'request' => $request,
+                'values' => $values,
+                'fetch' => !$row,
+                'time' => round((microtime(true) - $time_start) * 1000)
+            ];
         return $req;
     }
 
-    public function select(array $fields = null){
+    public function select(array $fields = null): Request\Select{
         $select = new Request\Select($this);
         if(isset($fields))
             return $select->fields($fields);
@@ -46,7 +65,7 @@ class Database{
         return $select;
     }
 
-    public function insert(array $fields = null){
+    public function insert(array $fields = null): Request\Insert{
         $insert = new Request\Insert($this);
         if(isset($fields))
             return $insert->fields($fields);
@@ -54,7 +73,7 @@ class Database{
         return $insert;
     }
 
-    public function update(array $fields = null){
+    public function update(array $fields = null): Request\Update{
         $update = new Request\Update($this);
         if(isset($fields))
             return $update->fields($fields);
@@ -62,7 +81,7 @@ class Database{
         return $update;
     }
 
-    public function create(string $table = null){
+    public function create(string $table = null): Request\Create{
         $create = new Request\Create($this);
         if(isset($table))
             return $create->table($table);
@@ -70,7 +89,7 @@ class Database{
         return $create;
     }
 
-    public function drop(string $table = null){
+    public function drop(string $table = null): Request\Drop{
         $drop = new Request\Drop($this);
         if(isset($table))
             return $drop->table($table);
@@ -78,7 +97,7 @@ class Database{
         return $drop;
     }
 
-    public function delete(){
+    public function delete(): Request\Delete{
         return new Request\Delete($this);
     }
 
@@ -89,5 +108,4 @@ class Database{
     public function getRequests(): array{
         return $this->requests;
     }
-    //TODO update, delete
 }

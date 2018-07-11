@@ -2,32 +2,40 @@
 
 namespace Krutush\Database;
 
+/**
+ * Load a config file to provide a list of pdo instances (Database)
+ */
 class Connection{
+    /** @var array */
     protected static $databases = array();
 
+    /** @var array */
     protected $settings;
 
+    /** Load settings */
     public function __construct(string $path = null){
         if(isset($path))
             $this->settings = include($path);
     }
 
-    public function connect(string $dbname = null){
+    /** Setup Database */
+    public function connect(string $dbname = null): Database{
         if(static::exists($dbname))
-            throw new DatabaseException("Allready connect");
+            throw new \InvalidArgumentException("Allready connect");
 
         $dbname = static::parseName($dbname);
         if(!isset($this->settings[$dbname]))
-            throw new DatabaseException('Can\'t find '.$dbname.' in settings');
+            throw new \InvalidArgumentException('Can\'t find '.$dbname.' in settings');
 
         static::$databases[$dbname] = new Database($this->settings[$dbname]);
         return static::$databases[$dbname];
     }
 
+    /** If you dont remember how to make a try-catch */
     public function tryConnect(string $dbname = null, bool $quiet = false) {
         try {
             return $this->connect($dbname);
-        } catch (DatabaseException $e) {
+        } catch (\Exception $e) {
             return $quiet ? false : $e;
         }
     }
@@ -35,7 +43,7 @@ class Connection{
     public static function get(string $dbname = null){
         $dbname = static::parseName($dbname);
         if(!static::exists($dbname))
-            throw new DatabaseException('Can\'t find "'.$dbname.'"');
+            throw new \InvalidArgumentException('Can\'t find "'.$dbname.'"');
 
         return static::$databases[$dbname];
     }
@@ -50,7 +58,7 @@ class Connection{
     public static function tryGet(string $dbname = null, bool $quiet = false) {
         try {
             return static::get($dbname);
-        } catch (DatabaseException $e) {
+        } catch (\Exception $e) {
             return $quiet ? false : $e;
         }
     }
@@ -58,7 +66,7 @@ class Connection{
     public function tryGetCreate(string $dbname = null, bool $quiet = false) {
         try {
             return $this->getCreate($dbname);
-        } catch (DatabaseException $e) {
+        } catch (\Exception $e) {
             return $quiet ? false : $e;
         }
     }

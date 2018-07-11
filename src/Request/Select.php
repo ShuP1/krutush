@@ -8,9 +8,16 @@ namespace Krutush\Database\Request;
 use Krutush\Database\DatabaseException;
 
 class Select extends Data{
+    /** @var array */
     protected $fields;
+
+    /** @var string */
     protected $table;
+
+    /** @var array */
     protected $where;
+
+    /** @var string */
     protected $group;
     protected $order;
     protected $limit;
@@ -29,13 +36,19 @@ class Select extends Data{
 
     public function join(string $joins, string $type = 'INNER', bool $add = false): Select{
         if(!in_array($type, array('INNER', 'LEFT', 'RIGHT')))
-            throw new DatabaseException('Unknown JOIN type');
+            throw new \InvalidArgumentException('Unknown JOIN type');
         $this->joins = ($add && $this->joins ? $this->joins."\n" : '').$type.' JOIN '.$joins;
         return $this;
     }
 
-    public function where(string $where, bool $add = false): Select{
-        $this->where = $add && $this->where ? '('.$this->where.') AND ('.$where.')' : $where;
+    /**
+     * @param string|array $where
+     * @param boolean $add
+     * @return Select
+     */
+    public function where($where, bool $add = false): Select{
+        $where = is_array($where) ? $where : [$where];
+        $this->where = $add && $this->where ? array_merge($this->where, $where) : $where;
         return $this;
     }
 
@@ -61,27 +74,21 @@ class Select extends Data{
 
     public function sql(){
         if(!isset($this->table))
-            throw new DatabaseException('Any table set');
+            throw new \UnexpectedValueException('Any table set');
 
         $fields = '*';
-        if(isset($this->fields)){ 
-            $numItems = count($this->fields);
-            $i = 0;
-            $fields = '';
+        if(isset($this->fields)){
+            $lines = [];
             foreach($this->fields as $key => $value){
-                $fields .= $value;
-                if(is_string($key))
-                    $fields .= ' '.$key;
-
-                if(++$i !== $numItems) //Not last
-                    $fields .= ', ';
+                $lines[] = $value.(is_string($key) ? ' '.$key : '');
             }
+            $fields = implode(', ', $lines);
         }
 
         $sql = 'SELECT '.$fields.
         "\n".'FROM '.$this->table.
         ($this->joins ? ("\n".$this->joins) : '').
-        ($this->where ? ("\n".'WHERE '.$this->where) : '').
+        ($this->where ? ("\n".'WHERE '.static::combineParams($this->where)) : '').
         ($this->group ? ("\n".'GROUP BY '.$this->group) : '').
         ($this->order ? ("\n".'ORDER BY '.$this->order) : '').
         ($this->limit ? ("\n".'LIMIT '.$this->limit) : '').

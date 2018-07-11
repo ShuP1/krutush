@@ -16,17 +16,23 @@ class Delete extends Data{
         return $this;
     }
 
-    public function where(string $where, bool $add = false): Delete{
-        $this->where = $add && $this->where ? '('.$this->where.') AND ('.$where.')' : $where;
+    /**
+     * @param string|array $where
+     * @param boolean $add
+     * @return Delete
+     */
+    public function where($where, bool $add = false): Delete{
+        $where = is_array($where) ? $where : [$where];
+        $this->where = $add && $this->where ? array_merge($this->where, $where) : $where;
         return $this;
     }
 
     public function sql(){
         if(!isset($this->table))
-            throw new DatabaseException('Any table set');
+            throw new \UnexpectedValueException('Any table set');
 
         $sql = 'DELETE FROM '.$this->table.
-        ($this->where ? ("\n".'WHERE '.$this->where) : '');
+        ($this->where ? ("\n".'WHERE '.static::combineParams($this->where)) : '');
         return $sql;
     }
 
