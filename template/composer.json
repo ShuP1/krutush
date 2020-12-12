@@ -1,0 +1,18 @@
+{
+    "name": "krutush/template",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "sheychen",
+            "email": "contact@clementbois.fr"
+        }
+    ],
+    "suggest": {
+        "krutush/krutush": "Hello"
+    },
+    "autoload": {
+        "psr-4": {
+            "Krutush\\Template\\": "src/"
+        }
+    }
+}
